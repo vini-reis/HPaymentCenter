@@ -3,7 +3,21 @@
 # For more information, please see the documentation at:
 #   https://docs.haskellstack.org/en/stable/lock_files
 
-packages: []
+packages:
+- completed:
+    hackage: yesod-auth-oauth2-0.6.3.4@sha256:a56c296612ba9c1861a1e0571995cbc597778d8151dd6eb91b1e32dc84a74d7d,3316
+    pantry-tree:
+      size: 2132
+      sha256: b91dda4741958f9f6cb5f06094ad57334fb98554fc4408614813ce5d3163fbd9
+  original:
+    hackage: yesod-auth-oauth2-0.6.3.4@sha256:a56c296612ba9c1861a1e0571995cbc597778d8151dd6eb91b1e32dc84a74d7d,3316
+- completed:
+    hackage: unliftio-0.2.19@sha256:435d7ecbf5333fcf15bb2efe43691ca9c597e2fbbc943d542d247222334f0972,3395
+    pantry-tree:
+      size: 2423
+      sha256: a5888e600dfd06cbac8a3f1efea06c4756c7bcce12d7ad7d56918f755197fe84
+  original:
+    hackage: unliftio-0.2.19@sha256:435d7ecbf5333fcf15bb2efe43691ca9c597e2fbbc943d542d247222334f0972,3395
 snapshots:
 - completed:
     size: 534126

@@ -2,8 +2,8 @@
 -- Syntax for this file here: https://github.com/yesodweb/persistent/blob/master/docs/Persistent-entity-syntax.md
 
 User
-    username Text
-    password Text Maybe
+    ident Text
+    name Text
     email Text
-    UniqueUser username
+    UniqueUser ident
     deriving Typeable
