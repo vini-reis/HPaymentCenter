@@ -11,5 +11,8 @@ getProfileR :: Handler Html
 getProfileR = do
     (_, user) <- requireAuthPair
     defaultLayout $ do
-        setTitle . toHtml $ userIdent user <> "'s User page"
+        setTitle . toHtml $ 
+            case userName user of
+                Just name -> name <> "'s User page"
+                Nothing -> ""
         $(widgetFile "profile")

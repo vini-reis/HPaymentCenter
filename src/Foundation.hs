@@ -4,7 +4,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE ViewPatterns #-}
-{-# LANGUAGE ExplicitForAll #-}
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE InstanceSigs #-}
 
@@ -245,14 +245,23 @@ instance YesodAuth App where
         case x of
             Just (Entity uid _) -> return $ Authenticated uid
             Nothing -> Authenticated <$> insert User
-                { userIdent = credsIdent creds
-                , userName = ""
-                , userEmail = ""
+                { userName = Nothing
+                , userEmail = credsIdent creds
+                , userPassword = Nothing
+                , userVerkey = Nothing
+                , userVerified = False
                 }
 
     -- You can add other plugins like Google Email, email or OAuth here
     authPlugins :: App -> [AuthPlugin App]
-    authPlugins _ = [oauth2Google Env.clientId Env.clientSecret]
+    authPlugins _ = [oauth2Google Env.clientId Env.clientSecret, authEmail]
+
+    getAuthId creds = liftHandler . runDB $ do
+        x <- insertBy $ User Nothing (credsIdent creds) Nothing Nothing False
+        return $ Just $
+            case x of
+                Left (Entity userid _) -> userid -- newly added user
+                Right userid -> userid -- existing user
 
 -- | Access function to determine if a user is logged in.
 isAuthenticated :: Handler AuthResult
@@ -263,6 +272,25 @@ isAuthenticated = do
         Just _ -> Authorized
 
 instance YesodAuthPersist App
+
+instance YesodAuthEmail App where
+    type AuthEmailId App = UserId
+
+    afterPasswordRoute :: App -> Route App
+    afterPasswordRoute _ = HomeR
+
+    addUnverified :: Email -> VerKey -> AuthHandler App UserId
+    addUnverified email verkey =
+        liftHandler . runDB $ insert User 
+            { userName      = Nothing
+            , userEmail     = email
+            , userPassword  = Nothing
+            , userVerkey    = Just verkey
+            , userVerified  = False
+            }
+
+    sendVerifyEmail :: Email -> VerKey -> VerUrl -> AuthHandler App ()
+    sendVerifyEmail = undefined
 
 -- This instance is required to use forms. You can modify renderMessage to
 -- achieve customized and internationalized form validation messages.
