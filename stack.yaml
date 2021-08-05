@@ -38,6 +38,7 @@ packages:
 extra-deps:
   - yesod-auth-oauth2-0.6.3.4@sha256:a56c296612ba9c1861a1e0571995cbc597778d8151dd6eb91b1e32dc84a74d7d,3316
   - unliftio-0.2.19@sha256:435d7ecbf5333fcf15bb2efe43691ca9c597e2fbbc943d542d247222334f0972,3395
+  - smtp-mail-0.3.0.0@sha256:2e6d9cb29d09a5a04d77a905eb1b570b94b5654e24d40630ea96aa374474c12f,1239
 # - acme-missiles-0.3
 # - git: https://github.com/commercialhaskell/stack.git
 #   commit: e7b331f14bcffb8367cd58fbfc8b40ec7642100a

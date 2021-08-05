@@ -18,6 +18,13 @@ packages:
       sha256: a5888e600dfd06cbac8a3f1efea06c4756c7bcce12d7ad7d56918f755197fe84
   original:
     hackage: unliftio-0.2.19@sha256:435d7ecbf5333fcf15bb2efe43691ca9c597e2fbbc943d542d247222334f0972,3395
+- completed:
+    hackage: smtp-mail-0.3.0.0@sha256:2e6d9cb29d09a5a04d77a905eb1b570b94b5654e24d40630ea96aa374474c12f,1239
+    pantry-tree:
+      size: 450
+      sha256: 4d319cb6c22b35ca043a83210cd09bfbf99eec3dca4945cd53ed5b7c96f7daca
+  original:
+    hackage: smtp-mail-0.3.0.0@sha256:2e6d9cb29d09a5a04d77a905eb1b570b94b5654e24d40630ea96aa374474c12f,1239
 snapshots:
 - completed:
     size: 534126

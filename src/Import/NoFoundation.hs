@@ -12,3 +12,4 @@ import Yesod.Auth.Email         as Import
 import Yesod.Auth.OAuth2.Google as Import
 import Yesod.Core.Types         as Import (loggerSet)
 import Yesod.Default.Config2    as Import
+import Network.Mail.SMTP        as Import hiding (Response)
