@@ -16,8 +16,6 @@ import Text.Hamlet          (hamletFile)
 import Text.Jasmine         (minifym)
 import Control.Monad.Logger (LogSource)
 
-import qualified Config.Env     as Env
-
 import Yesod.Default.Util   (addStaticContentExternal)
 import Yesod.Core.Types     (Logger)
 import qualified Yesod.Core.Unsafe as Unsafe
@@ -254,7 +252,7 @@ instance YesodAuth App where
 
     -- You can add other plugins like Google Email, email or OAuth here
     authPlugins :: App -> [AuthPlugin App]
-    authPlugins _ = [oauth2Google Env.clientId Env.clientSecret, authEmail]
+    authPlugins _ = [authEmail]
 
     getAuthId creds = liftHandler . runDB $ do
         x <- insertBy $ User Nothing (credsIdent creds) Nothing Nothing False
@@ -290,7 +288,19 @@ instance YesodAuthEmail App where
             }
 
     sendVerifyEmail :: Email -> VerKey -> VerUrl -> AuthHandler App ()
-    sendVerifyEmail = undefined
+    sendVerifyEmail email _ verurl = do 
+            mail <- simpleMail addrTo addrFrom "Verify password" body html
+            sendMailWithLogin' email username password mail
+        where
+            username = "myemail@email.com"
+            password = "password123"
+            addrTo = Address { addressName = Nothing, addressEmail = email }
+            addrFrom = Address { addressName = Just "Vinícius Reis", addressEmail = username }
+            body = "Verify your passoword cliclink below:"
+            html = $(widgetFile "email/verification")
+
+    getVerifyKey :: UserId -> AuthHandler App (Maybe VerKey)
+    getVerifyKey userId = undefined
 
 -- This instance is required to use forms. You can modify renderMessage to
 -- achieve customized and internationalized form validation messages.
