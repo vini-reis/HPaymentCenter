@@ -207,10 +207,10 @@ instance YesodBreadcrumbs App where
     breadcrumb
         :: Route App  -- ^ The route the user is visiting currently.
         -> Handler (Text, Maybe (Route App))
-    breadcrumb HomeR = return ("Home", Nothing)
+    breadcrumb HomeR     = return ("Home", Nothing)
     breadcrumb (AuthR _) = return ("Login", Just HomeR)
-    breadcrumb ProfileR = return ("Profile", Just HomeR)
-    breadcrumb  _ = return ("home", Nothing)
+    breadcrumb ProfileR  = return ("Profile", Just HomeR)
+    breadcrumb  _        = return ("home", Nothing)
 
 -- How to run database actions.
 instance YesodPersist App where
@@ -255,20 +255,13 @@ instance YesodAuth App where
     authPlugins :: App -> [AuthPlugin App]
     authPlugins _ = [authEmail]
 
-    getAuthId creds = liftHandler . runDB $ do
-        x <- insertBy $ User Nothing (credsIdent creds) Nothing Nothing False
-        return $ Just $
-            case x of
-                Left (Entity userid _) -> userid -- newly added user
-                Right userid -> userid -- existing user
-
 -- | Access function to determine if a user is logged in.
 isAuthenticated :: Handler AuthResult
 isAuthenticated = do
     muid <- maybeAuthId
     return $ case muid of
         Nothing -> Unauthorized "You must login to access this page"
-        Just _ -> Authorized
+        Just _  -> Authorized
 
 instance YesodAuthPersist App
 
@@ -290,24 +283,67 @@ instance YesodAuthEmail App where
 
     sendVerifyEmail :: Email -> VerKey -> VerUrl -> AuthHandler App ()
     sendVerifyEmail email _ verurl = do 
-            htmlPart <- plainPart . decodeUtf8 . fromStrict <$> readFile "../templates/email/verification.hamlet"
-            mail <- return $ simpleMail addrTo [addrFrom] [] [] "Verify password" [htmlPart]
-            liftIO $ sendMailWithLogin' hostname port username password mail
+            part <- plainPart . decodeUtf8 . fromStrict <$> readFile "../templates/email/verification.hamlet"
+            mail     <- return $ simpleMail addrTo [addrFrom] [] [] "Verify password" [part]
+            liftIO $ sendMailWithLogin' hostname myPort username password mail
         where
-            hostname = "smpt.google.com" :: String
-            port = 8080
-            username = "myemail@email.com" :: String
-            password = "password123" :: String
+            hostname    = "smpt.google.com" :: String
+            myPort        = 8080
+            username    = "myemail@email.com" :: String
+            password    = "password123" :: String
             senderEmail = "myemail@email.com"
-            addrTo = Address { addressName = Nothing, addressEmail = email }
-            addrFrom = Address { addressName = Just "Vinícius Reis", addressEmail = senderEmail }
+            addrTo      = Address { addressName = Nothing, addressEmail = email }
+            addrFrom    = Address { addressName = Just "Vinícius Reis", addressEmail = senderEmail }
 
     getVerifyKey :: UserId -> AuthHandler App (Maybe Text)
     getVerifyKey userId = do
         user <- liftHandler . runDB $ get userId
         case user of
-            Just u -> return $ userVerkey u
+            Just u  -> return $ userVerkey u
             Nothing -> return Nothing
+
+    setVerifyKey :: UserId -> VerKey -> AuthHandler App ()
+    setVerifyKey userId verkey = liftHandler . runDB $ update userId [UserVerkey =. Just verkey]
+
+    verifyAccount :: UserId -> AuthHandler App (Maybe UserId)
+    verifyAccount userId = do
+        mUser <- liftHandler . runDB $ get userId
+        case mUser of
+            Nothing   -> return Nothing
+            Just user -> do
+                updatedUser <- liftHandler . runDB $ update userId [UserVerified =. True]
+                return (Just userId)
+
+    getPassword :: UserId -> AuthHandler App (Maybe SaltedPass)
+    getPassword userId = do
+        mUser <- liftHandler . runDB $ get userId
+        case mUser of
+            Nothing   -> return Nothing
+            Just user -> do
+                return (userPassword user)
+
+    setPassword :: UserId -> SaltedPass -> AuthHandler App ()
+    setPassword userId pass = liftHandler . runDB $ update userId [UserPassword =. Just pass]
+
+    getEmailCreds :: Identifier -> AuthHandler App (Maybe (EmailCreds App))
+    getEmailCreds email = do
+        mUser <- liftHandler . runDB $ getBy $ UniqueUser email
+        case mUser of
+            Nothing                     -> return Nothing
+            Just (Entity userId user)   -> return $ Just EmailCreds
+                { emailCredsId      = userId
+                , emailCredsAuthId  = Just userId
+                , emailCredsStatus  = isJust $ userPassword user
+                , emailCredsVerkey  = userVerkey user
+                , emailCredsEmail   = email
+                }
+
+    getEmail :: UserId -> AuthHandler App (Maybe Email)
+    getEmail userId = do
+        mUser <- liftHandler . runDB $ get userId
+        case mUser of
+            Nothing   -> return Nothing
+            Just user -> return $ Just (userEmail user)
 
 -- This instance is required to use forms. You can modify renderMessage to
 -- achieve customized and internationalized form validation messages.
