@@ -15,6 +15,7 @@ import Database.Persist.Sql (ConnectionPool, runSqlPool)
 import Text.Hamlet          (hamletFile)
 import Text.Jasmine         (minifym)
 import Control.Monad.Logger (LogSource)
+import Network.Mail.Mime    (plainPart)
 
 import Yesod.Default.Util   (addStaticContentExternal)
 import Yesod.Core.Types     (Logger)
@@ -289,18 +290,24 @@ instance YesodAuthEmail App where
 
     sendVerifyEmail :: Email -> VerKey -> VerUrl -> AuthHandler App ()
     sendVerifyEmail email _ verurl = do 
-            mail <- simpleMail addrTo addrFrom "Verify password" body html
-            sendMailWithLogin' email username password mail
+            htmlPart <- plainPart . decodeUtf8 . fromStrict <$> readFile "../templates/email/verification.hamlet"
+            mail <- return $ simpleMail addrTo [addrFrom] [] [] "Verify password" [htmlPart]
+            liftIO $ sendMailWithLogin' hostname port username password mail
         where
-            username = "myemail@email.com"
-            password = "password123"
+            hostname = "smpt.google.com" :: String
+            port = 8080
+            username = "myemail@email.com" :: String
+            password = "password123" :: String
+            senderEmail = "myemail@email.com"
             addrTo = Address { addressName = Nothing, addressEmail = email }
-            addrFrom = Address { addressName = Just "Vinícius Reis", addressEmail = username }
-            body = "Verify your passoword cliclink below:"
-            html = $(widgetFile "email/verification")
+            addrFrom = Address { addressName = Just "Vinícius Reis", addressEmail = senderEmail }
 
-    getVerifyKey :: UserId -> AuthHandler App (Maybe VerKey)
-    getVerifyKey userId = undefined
+    getVerifyKey :: UserId -> AuthHandler App (Maybe Text)
+    getVerifyKey userId = do
+        user <- liftHandler . runDB $ get userId
+        case user of
+            Just u -> return $ userVerkey u
+            Nothing -> return Nothing
 
 -- This instance is required to use forms. You can modify renderMessage to
 -- achieve customized and internationalized form validation messages.
