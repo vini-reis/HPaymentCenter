@@ -1,9 +1,4 @@
 # Haskell Payment Center
-
-## Vídeo de apresentação
-
-A apresentação do projeto pode ser visualizada [neste link](https://youtu.be/i9U4r5aWjy0).
-
 ## Introdução
 
 A ideia do projeto foi criar uma aplicação para realizar pagamentos de forma mais confiável utilizando a linguagem de programação Haskell, que consiste numa linguagem puramente funcional, garantindo maior confiabilidade nesse tipo de transação.
