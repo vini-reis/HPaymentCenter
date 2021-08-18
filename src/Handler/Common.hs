@@ -1,22 +1,33 @@
 {-# LANGUAGE NoImplicitPrelude #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE OverloadedStrings #-}
+
 -- | Common handler functions.
 module Handler.Common where
 
-import Data.FileEmbed (embedFile)
 import Import
 
--- These handlers embed files in the executable at compile time to avoid a
--- runtime dependency, and for efficiency.
+-- | ADT que serve como objeto JSON de retorno das requisições
+data (ToJSON a) => Retorno a = Retorno
+    { sucesso :: Bool
+    , mensagem :: Text
+    , objeto :: a
+    } deriving (Show, Read)
 
-getFaviconR :: Handler TypedContent
-getFaviconR = do cacheSeconds $ 60 * 60 * 24 * 30 -- cache for a month
-                 return $ TypedContent "image/x-icon"
-                        $ toContent $(embedFile "config/favicon.ico")
+-- | Instância de ToJSON para Retorno de um tipo a que possa ser convertido para JSON
+instance (ToJSON a) => ToJSON (Retorno a) where
+    toJSON (Retorno s m o) = object ["sucesso" .= s, "mensagem" .= m, "objeto" .= toJSON o]
 
-getRobotsR :: Handler TypedContent
-getRobotsR = return $ TypedContent typePlain
-                    $ toContent $(embedFile "config/robots.txt")
+-- | Instância de JSON para entidades do banco de dados
+-- | utilizada para coletar os ids das entidades no front-end
+instance (PersistEntity a, ToJSON a) => ToJSON (Entity a) where
+    toJSON = keyValueEntityToJSON
+
+-- | Instâncias de ToJSON para as entidades criadas
+instance ToJSON Conta where
+    toEncoding = genericToEncoding defaultOptions
+
+instance ToJSON Transacao where
+    toEncoding = genericToEncoding defaultOptions

@@ -8,7 +8,7 @@ module TestImport
 
 import Application           (makeFoundation, makeLogWare)
 import ClassyPrelude         as X hiding (delete, deleteBy, Handler)
-import Database.Persist      as X hiding (get)
+import Database.Persist      hiding (get)
 import Database.Persist.Sql  (SqlPersistM, runSqlPersistMPool, rawExecute, rawSql, unSingle, connEscapeName)
 import Foundation            as X
 import Model                 as X
@@ -18,6 +18,7 @@ import Yesod.Default.Config2 (useEnv, loadYamlSettings)
 import Yesod.Auth            as X
 import Yesod.Test            as X
 import Yesod.Core.Unsafe     (fakeHandlerGetLogger)
+import Yesod.Auth.HashDB     as X (setPassword)
 
 runDB :: SqlPersistM a -> YesodExample App a
 runDB query = do
@@ -74,14 +75,22 @@ getTables = do
 -- | Authenticate as a user. This relies on the `auth-dummy-login: true` flag
 -- being set in test-settings.yaml, which enables dummy authentication in
 -- Foundation.hs
-authenticateAs :: Entity User -> YesodExample App ()
+authenticateAs :: Entity Usuario -> YesodExample App ()
 authenticateAs (Entity _ u) = do
     request $ do
         setMethod "POST"
-        addPostParam "ident" $ userUsername u
+        addPostParam "username" $ usuarioEmail u
         setUrl $ AuthR $ PluginR "dummy" []
 
 -- | Create a user.  The dummy email entry helps to confirm that foreign-key
 -- checking is switched off in wipeDB for those database backends which need it.
-createUser :: Text -> YesodExample App (Entity User)
-createUser ident = runDB $ do insertEntity User {userUsername = ident, userPassword = Nothing, userEmail = ""}
+createUser :: Text -> Text -> Text -> YesodExample App (Entity Usuario)
+createUser nome email senha = do
+    u <- setPassword senha $ Usuario
+            { usuarioNome       = Just nome
+            , usuarioEmail      = email
+            , usuarioSenha      = Nothing
+            , usuarioChave      = Nothing
+            , usuarioVerificado = True
+            }
+    runDB $ insertEntity u

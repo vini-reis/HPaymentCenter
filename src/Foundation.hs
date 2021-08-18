@@ -11,17 +11,10 @@
 module Foundation where
 
 import Import.NoFoundation
-import Database.Persist.Sql (ConnectionPool, runSqlPool)
-import Text.Hamlet          (hamletFile)
-import Text.Jasmine         (minifym)
-import Control.Monad.Logger (LogSource)
-import Network.Mail.Mime    (plainPart)
 
-import Yesod.Default.Util   (addStaticContentExternal)
-import Yesod.Core.Types     (Logger)
-import qualified Yesod.Core.Unsafe as Unsafe
-import qualified Data.CaseInsensitive as CI
-import qualified Data.Text.Encoding as TE
+import qualified Yesod.Core.Unsafe      as Unsafe
+import qualified Data.CaseInsensitive   as CI
+import qualified Data.Text.Encoding     as TE
 
 -- | The foundation datatype for your application. This can be a good place to
 -- keep settings and values requiring initialization before your application
@@ -92,21 +85,25 @@ instance Yesod App where
     -- To add it, chain it together with the defaultMiddleware: yesodMiddleware = defaultYesodMiddleware . defaultCsrfMiddleware
     -- For details, see the CSRF documentation in the Yesod.Core.Handler module of the yesod-core package.
     yesodMiddleware :: ToTypedContent res => Handler res -> Handler res
-    yesodMiddleware = defaultYesodMiddleware
+    yesodMiddleware app = do 
+        maybeRoute <- getCurrentRoute
+        let unsafeRoute = case maybeRoute of
+                                Just _ -> True
+                                Nothing -> True
+
+        defaultYesodMiddleware $ defaultCsrfSetCookieMiddleware $ (if unsafeRoute then id else defaultYesodMiddleware) app
 
     defaultLayout :: Widget -> Handler Html
     defaultLayout widget = do
-        master <- getYesod
         mmsg <- getMessage
 
-        muser <- maybeAuthPair
+        muser <- maybeAuthId
         mcurrentRoute <- getCurrentRoute
 
-        -- Get the breadcrumbs, as defined in the YesodBreadcrumbs instance.
-        (title, parents) <- breadcrumbs
-
         -- Define the menu items of the header.
-        let menuItems =
+        let 
+            usuarioId = fromJust muser
+            menuItems =
                 [ NavbarLeft $ MenuItem
                     { menuItemLabel = "Home"
                     , menuItemRoute = HomeR
@@ -114,12 +111,17 @@ instance Yesod App where
                     }
                 , NavbarLeft $ MenuItem
                     { menuItemLabel = "Profile"
-                    , menuItemRoute = ProfileR
+                    , menuItemRoute = PerfilR $ fromSqlKey usuarioId
                     , menuItemAccessCallback = isJust muser
                     }
                 , NavbarRight $ MenuItem
+                    { menuItemLabel = "Register"
+                    , menuItemRoute = CadastrarR
+                    , menuItemAccessCallback = isNothing muser
+                    }
+                , NavbarRight $ MenuItem
                     { menuItemLabel = "Login"
-                    , menuItemRoute = LoginFormR
+                    , menuItemRoute = AuthR LoginR
                     , menuItemAccessCallback = isNothing muser
                     }
                 , NavbarRight $ MenuItem
@@ -143,6 +145,7 @@ instance Yesod App where
 
         pc <- widgetToPageContent $ do
             addStylesheet $ StaticR css_bootstrap_css
+            addScript $ StaticR js_shared_js
             $(widgetFile "default-layout")
         withUrlRenderer $(hamletFile "templates/default-layout-wrapper.hamlet")
 
@@ -150,7 +153,7 @@ instance Yesod App where
     authRoute
         :: App
         -> Maybe (Route App)
-    authRoute _ = Just $ AuthR LoginR
+    authRoute _ = Just (AuthR LoginR)
 
     isAuthorized
         :: Route App  -- ^ The route the user is visiting.
@@ -158,7 +161,7 @@ instance Yesod App where
         -> Handler AuthResult
     -- the profile route requires that the user is authenticated, so we
     -- delegate to that function
-    isAuthorized ProfileR _ = isAuthenticated
+    isAuthorized (PerfilR _) _ = isAuthenticated
 
     -- Routes not requiring authentication.
     isAuthorized _ _ = return Authorized
@@ -199,19 +202,6 @@ instance Yesod App where
     makeLogger :: App -> IO Logger
     makeLogger = return . appLogger
 
--- Define breadcrumbs.
-instance YesodBreadcrumbs App where
-    -- Takes the route that the user is currently on, and returns a tuple
-    -- of the 'Text' that you want the label to display, and a previous
-    -- breadcrumb route.
-    breadcrumb
-        :: Route App  -- ^ The route the user is visiting currently.
-        -> Handler (Text, Maybe (Route App))
-    breadcrumb HomeR     = return ("Home", Nothing)
-    breadcrumb (AuthR _) = return ("Login", Just HomeR)
-    breadcrumb ProfileR  = return ("Profile", Just HomeR)
-    breadcrumb  _        = return ("home", Nothing)
-
 -- How to run database actions.
 instance YesodPersist App where
     type YesodPersistBackend App = SqlBackend
@@ -225,7 +215,7 @@ instance YesodPersistRunner App where
     getDBRunner = defaultGetDBRunner appConnPool
 
 instance YesodAuth App where
-    type AuthId App = UserId
+    type AuthId App = UsuarioId
 
     -- Where to send a user after successful login
     loginDest :: App -> Route App
@@ -237,23 +227,15 @@ instance YesodAuth App where
     redirectToReferer :: App -> Bool
     redirectToReferer _ = True
 
-    authenticate :: (MonadHandler m, HandlerSite m ~ App)
-                 => Creds App -> m (AuthenticationResult App)
-    authenticate creds = liftHandler $ runDB $ do
-        x <- getBy $ UniqueUser $ credsIdent creds
-        case x of
-            Just (Entity uid _) -> return $ Authenticated uid
-            Nothing -> Authenticated <$> insert User
-                { userName = Nothing
-                , userEmail = credsIdent creds
-                , userPassword = Nothing
-                , userVerkey = Nothing
-                , userVerified = False
-                }
+    authenticate creds = do
+        mUsuario <- liftHandler . runDB $ selectFirst [UsuarioEmail ==. credsIdent creds] []
+        case mUsuario of
+            Nothing -> return $ UserError InvalidLogin
+            Just usuario -> return $ Authenticated $ entityKey usuario
 
     -- You can add other plugins like Google Email, email or OAuth here
     authPlugins :: App -> [AuthPlugin App]
-    authPlugins _ = [authEmail]
+    authPlugins _ = [authHashDBWithForm getLoginForm (Just . UniqueUser)]
 
 -- | Access function to determine if a user is logged in.
 isAuthenticated :: Handler AuthResult
@@ -264,86 +246,6 @@ isAuthenticated = do
         Just _  -> Authorized
 
 instance YesodAuthPersist App
-
-instance YesodAuthEmail App where
-    type AuthEmailId App = UserId
-
-    afterPasswordRoute :: App -> Route App
-    afterPasswordRoute _ = HomeR
-
-    addUnverified :: Email -> VerKey -> AuthHandler App UserId
-    addUnverified email verkey =
-        liftHandler . runDB $ insert User 
-            { userName      = Nothing
-            , userEmail     = email
-            , userPassword  = Nothing
-            , userVerkey    = Just verkey
-            , userVerified  = False
-            }
-
-    sendVerifyEmail :: Email -> VerKey -> VerUrl -> AuthHandler App ()
-    sendVerifyEmail email _ verurl = do 
-            part <- plainPart . decodeUtf8 . fromStrict <$> readFile "../templates/email/verification.hamlet"
-            mail     <- return $ simpleMail addrTo [addrFrom] [] [] "Verify password" [part]
-            liftIO $ sendMailWithLogin' hostname myPort username password mail
-        where
-            hostname    = "smpt.google.com" :: String
-            myPort        = 8080
-            username    = "myemail@email.com" :: String
-            password    = "password123" :: String
-            senderEmail = "myemail@email.com"
-            addrTo      = Address { addressName = Nothing, addressEmail = email }
-            addrFrom    = Address { addressName = Just "Vinícius Reis", addressEmail = senderEmail }
-
-    getVerifyKey :: UserId -> AuthHandler App (Maybe Text)
-    getVerifyKey userId = do
-        user <- liftHandler . runDB $ get userId
-        case user of
-            Just u  -> return $ userVerkey u
-            Nothing -> return Nothing
-
-    setVerifyKey :: UserId -> VerKey -> AuthHandler App ()
-    setVerifyKey userId verkey = liftHandler . runDB $ update userId [UserVerkey =. Just verkey]
-
-    verifyAccount :: UserId -> AuthHandler App (Maybe UserId)
-    verifyAccount userId = do
-        mUser <- liftHandler . runDB $ get userId
-        case mUser of
-            Nothing   -> return Nothing
-            Just user -> do
-                updatedUser <- liftHandler . runDB $ update userId [UserVerified =. True]
-                return (Just userId)
-
-    getPassword :: UserId -> AuthHandler App (Maybe SaltedPass)
-    getPassword userId = do
-        mUser <- liftHandler . runDB $ get userId
-        case mUser of
-            Nothing   -> return Nothing
-            Just user -> do
-                return (userPassword user)
-
-    setPassword :: UserId -> SaltedPass -> AuthHandler App ()
-    setPassword userId pass = liftHandler . runDB $ update userId [UserPassword =. Just pass]
-
-    getEmailCreds :: Identifier -> AuthHandler App (Maybe (EmailCreds App))
-    getEmailCreds email = do
-        mUser <- liftHandler . runDB $ getBy $ UniqueUser email
-        case mUser of
-            Nothing                     -> return Nothing
-            Just (Entity userId user)   -> return $ Just EmailCreds
-                { emailCredsId      = userId
-                , emailCredsAuthId  = Just userId
-                , emailCredsStatus  = isJust $ userPassword user
-                , emailCredsVerkey  = userVerkey user
-                , emailCredsEmail   = email
-                }
-
-    getEmail :: UserId -> AuthHandler App (Maybe Email)
-    getEmail userId = do
-        mUser <- liftHandler . runDB $ get userId
-        case mUser of
-            Nothing   -> return Nothing
-            Just user -> return $ Just (userEmail user)
 
 -- This instance is required to use forms. You can modify renderMessage to
 -- achieve customized and internationalized form validation messages.
@@ -360,6 +262,12 @@ instance HasHttpManager App where
 
 unsafeHandler :: App -> Handler a -> IO a
 unsafeHandler = Unsafe.fakeHandlerGetLogger appLogger
+
+getLoginForm :: Route App -> Widget
+getLoginForm action = do
+    req <- getRequest
+    let mToken = reqToken req
+    $(whamletFile "templates/usuario/login.hamlet")
 
 -- Note: Some functionality previously present in the scaffolding has been
 -- moved to documentation in the Wiki. Following are some hopefully helpful

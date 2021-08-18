@@ -1,50 +1,36 @@
-
 <!-- Static navbar -->
-<nav .navbar.navbar-default.navbar-static-top>
-    <div .container>
-        <div .navbar-header>
-            <button type="button" .navbar-toggle.collapsed data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
-                <span class="sr-only">Toggle navigation
-                <span class="icon-bar">
-                <span class="icon-bar">
-                <span class="icon-bar">
+<nav .navbar .navbar-expand-lg .navbar-dark .bg-dark>
+    <div .container-fluid>
+        <button type="button" .navbar-toggler data-bs-toggle="collapse" data-bs-target="#navbar" aria-expanded="false" aria-controls="navbar">
+            <span .navbar-toggler-icon>
 
-        <div #navbar .collapse.navbar-collapse>
-            <ul .nav.navbar-nav>
+        <div #navbar .collapse .navbar-collapse>
+            <ul .navbar-nav .me-auto>
                 $forall MenuItem label route _ <- navbarLeftFilteredMenuItems
-                    <li :Just route == mcurrentRoute:.active>
-                        <a href="@{route}">#{label}
-
-            <ul .nav.navbar-nav.navbar-right>
-                $forall MenuItem label route _ <- navbarRightFilteredMenuItems
-                    <li :Just route == mcurrentRoute:.active>
-                        <a href="@{route}">#{label}
+                    <li .nav-item :Just route == mcurrentRoute:.active>
+                        <a .nav-link href="@{route}" aria-current="page">#{label}
+        <div .d-flex .align-items-center>
+        $forall MenuItem label route _ <- navbarRightFilteredMenuItems
+            <ul .navbar-nav .me-auto>
+                <li .nav-item :Just route == mcurrentRoute:.active>
+                    <a .nav-link href="@{route}">#{label}
 
 <!-- Page Contents -->
 
-<div .container>
-    $if not $ Just HomeR == mcurrentRoute
-        <ul .breadcrumb>
-            $forall bc <- parents
-                <li>
-                    <a href="@{fst bc}">#{snd bc}
-
-            <li .active>#{title}
-
+<div .container-fluid>
     $maybe msg <- mmsg
-      <div .alert.alert-info #message>#{msg}
+        <div .alert.alert-info.p-2 #message>#{msg}
+    <div .row>
+        ^{widget}
 
-
-$if (Just HomeR == mcurrentRoute)
-    ^{widget}
-$else
-    <div .container>
-        <div .row>
-            <div .col-md-12>
-                ^{widget}
+<div .toast-container .position-absolute .bottom-0 .end-0 .p-3>
+    <div .toast .align-items-center .text-white .bg-primary .border-0 .bottom-0 .end-0 role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body">
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close">
 
 <!-- Footer -->
-<footer .footer>
-    <div .container>
-        <p .text-muted>
-            #{appCopyright $ appSettings master}
+$# <footer .text-center>
+$#     <div .container .sticky-bottom>
+$#         <p .text-muted>
+$#             #{appCopyright $ appSettings master}

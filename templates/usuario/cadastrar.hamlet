@@ -1,0 +1,6 @@
+<div .container-fluid .p-5>
+    <div .row>
+        <div .col-md-12>
+            <form id="formRegister" method="post" action="" enctype=#{nuEnctype}>
+                ^{nuLoginForm}
+            <button .btn .btn-danger .m-2 type="submit" onclick="$('#formRegister').submit()">Register

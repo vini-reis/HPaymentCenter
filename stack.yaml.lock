@@ -5,30 +5,10 @@
 
 packages:
 - completed:
-    hackage: yesod-auth-oauth2-0.6.3.4@sha256:a56c296612ba9c1861a1e0571995cbc597778d8151dd6eb91b1e32dc84a74d7d,3316
+    hackage: json-0.10@sha256:d9fc6b07ce92b8894825a17d2cf14799856767eb30c8bf55962baa579207d799,3210
     pantry-tree:
-      size: 2132
-      sha256: b91dda4741958f9f6cb5f06094ad57334fb98554fc4408614813ce5d3163fbd9
+      size: 3190
+      sha256: 5654f66b7cd8bf087ac040a9b0a83eb064219eab32230f61a3adeddfdbb4d4cd
   original:
-    hackage: yesod-auth-oauth2-0.6.3.4@sha256:a56c296612ba9c1861a1e0571995cbc597778d8151dd6eb91b1e32dc84a74d7d,3316
-- completed:
-    hackage: unliftio-0.2.19@sha256:435d7ecbf5333fcf15bb2efe43691ca9c597e2fbbc943d542d247222334f0972,3395
-    pantry-tree:
-      size: 2423
-      sha256: a5888e600dfd06cbac8a3f1efea06c4756c7bcce12d7ad7d56918f755197fe84
-  original:
-    hackage: unliftio-0.2.19@sha256:435d7ecbf5333fcf15bb2efe43691ca9c597e2fbbc943d542d247222334f0972,3395
-- completed:
-    hackage: smtp-mail-0.3.0.0@sha256:2e6d9cb29d09a5a04d77a905eb1b570b94b5654e24d40630ea96aa374474c12f,1239
-    pantry-tree:
-      size: 450
-      sha256: 4d319cb6c22b35ca043a83210cd09bfbf99eec3dca4945cd53ed5b7c96f7daca
-  original:
-    hackage: smtp-mail-0.3.0.0@sha256:2e6d9cb29d09a5a04d77a905eb1b570b94b5654e24d40630ea96aa374474c12f,1239
-snapshots:
-- completed:
-    size: 534126
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/16/31.yaml
-    sha256: 637fb77049b25560622a224845b7acfe81a09fdb6a96a3c75997a10b651667f6
-  original:
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/16/31.yaml
+    hackage: json-0.10@sha256:d9fc6b07ce92b8894825a17d2cf14799856767eb30c8bf55962baa579207d799,3210
+snapshots: []

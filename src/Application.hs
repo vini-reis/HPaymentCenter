@@ -22,7 +22,7 @@ module Application
 
 import Control.Monad.Logger                 (liftLoc, runLoggingT)
 import Database.Persist.Postgresql          (createPostgresqlPool, pgConnStr,
-                                             pgPoolSize, runSqlPool)
+                                             pgPoolSize)
 import Import
 import Language.Haskell.TH.Syntax           (qLocation)
 import Network.HTTP.Client.TLS              (getGlobalManager)
@@ -40,10 +40,11 @@ import System.Log.FastLogger                (defaultBufSize, newStdoutLoggerSet,
 
 -- Import all relevant handler modules here.
 -- Don't forget to add new modules to your cabal file!
-import Handler.Common
 import Handler.Home
-import Handler.Profile
-import Handler.Login
+import Handler.Perfil
+import Handler.Conta
+import Handler.Cadastrar
+import Handler.Transacao
 
 -- This line actually creates our YesodDispatch instance. It is the second half
 -- of the call to mkYesodData which occurs in Foundation.hs. Please see the
@@ -83,6 +84,27 @@ makeFoundation appSettings = do
 
     -- Perform database migration using our application's logging settings.
     runLoggingT (runSqlPool (runMigration migrateAll) pool) logFunc
+
+    -- Adicionando entidades básicas, método Seed para início da aplicação
+    let admin1 = Usuario
+            { usuarioNome       = Just "Admin"
+            , usuarioEmail      = "admin@hpc.com"
+            , usuarioSenha      = Nothing
+            , usuarioChave      = Nothing
+            , usuarioVerificado = True
+            }
+    admin1 <- setPassword "123123" admin1
+    _ <- runLoggingT (runSqlPool (insertUnique admin1) pool) logFunc
+
+    let admin2 = Usuario
+            { usuarioNome       = Just "Vinícius Reis"
+            , usuarioEmail      = "vinicius.reis@aluno.ufabc.edu.br"
+            , usuarioSenha      = Nothing
+            , usuarioChave      = Nothing
+            , usuarioVerificado = True
+            }
+    admin2 <- setPassword "11041416" admin2
+    _ <- runLoggingT (runSqlPool (insertUnique admin2) pool) logFunc
 
     -- Return the foundation
     return $ mkFoundation pool
@@ -128,10 +150,10 @@ warpSettings foundation =
 -- | For yesod devel, return the Warp settings and WAI Application.
 getApplicationDev :: IO (Settings, Application)
 getApplicationDev = do
-    settings <- getAppSettings
-    foundation <- makeFoundation settings
-    wsettings <- getDevSettings $ warpSettings foundation
-    app <- makeApplication foundation
+    settings    <- getAppSettings
+    foundation  <- makeFoundation settings
+    wsettings   <- getDevSettings $ warpSettings foundation
+    app         <- makeApplication foundation
     return (wsettings, app)
 
 getAppSettings :: IO AppSettings

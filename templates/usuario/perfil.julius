@@ -1,0 +1,84 @@
+/*
+    Função utilizada para abrir e preencher alguns
+    dados na modal de criação de uma nova conta
+*/
+function OpenCreateAccountModal(userId){
+    $('#usuarioId').val(userId);
+
+    $('#modalCreateAccount').modal('show');
+}
+
+/*
+    Captura de evento de submit do form de novas contas
+*/
+$('#formNovaConta').on('submit', function (event){
+    event.preventDefault();
+    event.stopPropagation();
+
+    RequestPOST(this.action, $(this).serializeArray(), AfterSalvarConta);
+});
+
+/*
+    After function executado após o salvamento de uma conta
+*/
+function AfterSalvarConta (res){
+    if (!res.sucesso)
+        toast(res.mensagem);
+    else
+        location.reload();
+}
+
+/*
+    Função utilizada para habilitar e postar os dados de 
+    atualização de uma conta
+*/
+var edicaoConta = false;
+function EditarConta(contaId, contaJson){
+    contaJson = JSON.parse(contaJson);
+
+    // Habilita a edição dos campos da conta
+    $(`[data-hs-id="${contaId}"]`).each(function (index, object){
+        $(object).prop('disabled', edicaoConta);
+    })
+
+    $(`i[data-hs-id="${contaId}"]`).toggleClass('fa-pencil-alt').toggleClass('fa-check');
+
+    if (edicaoConta) {
+        contaJson.contaTipo = $(`#selectTipoConta[data-hs-id="${contaId}"]`).val();
+        contaJson.contaStatus = $(`#selectStatusConta[data-hs-id="${contaId}"]`).val();
+        contaJson.contaSaldo = $(`#saldoConta[data-hs-id="${contaId}"]`).val();
+
+        RequestPOST(`/conta/salvar/${contaId}`, contaJson, AfterSalvarConta);
+    }
+
+    edicaoConta = !edicaoConta;
+}
+
+function AbrirModalTransacao(){
+    $('#modalFazerTransacao').modal('show');
+}
+
+function PesquisarConta(){
+    var usuarioEmail = $('#pesquisarConta').val();
+
+    RequestGET(`/conta/pesquisar/${usuarioEmail}`, AfterPesquisarConta)
+}
+
+function AfterPesquisarConta(res){
+    if (res.sucesso){
+        $('#enviarPara').val(res.objeto.key);
+    }
+}
+
+$('#formNovaTransacao').on('submit', function (event){
+    event.preventDefault();
+    event.stopPropagation();
+
+    RequestPOST(this.action, $(this).serializeArray(), AfterTransacao);
+});
+
+function AfterTransacao(res){
+    if (res.sucesso){
+        location.reload();
+    }
+}
