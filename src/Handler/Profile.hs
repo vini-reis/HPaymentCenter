@@ -12,7 +12,7 @@ getProfileR = do
     (_, user) <- requireAuthPair
     defaultLayout $ do
         setTitle . toHtml $ 
-            case userName user of
+            case usuarioNome user of
                 Just name -> name <> "'s User page"
                 Nothing -> ""
         $(widgetFile "profile")
