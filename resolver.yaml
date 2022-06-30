@@ -10041,4 +10041,4 @@ hidden:
   ghc-lib: true
   cryptohash: true
 resolver:
-  compiler: ghc-8.10.4
+  compiler: ghc-8.10.7
