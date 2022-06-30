@@ -42,9 +42,9 @@ import System.Log.FastLogger                (defaultBufSize, newStdoutLoggerSet,
 -- Don't forget to add new modules to your cabal file!
 import Handler.Home
 import Handler.Perfil
-import Handler.Conta
-import Handler.Cadastrar
-import Handler.Transacao
+import Handler.Account
+import Handler.Register
+import Handler.Transaction
 
 -- This line actually creates our YesodDispatch instance. It is the second half
 -- of the call to mkYesodData which occurs in Foundation.hs. Please see the
@@ -86,22 +86,22 @@ makeFoundation appSettings = do
     runLoggingT (runSqlPool (runMigration migrateAll) pool) logFunc
 
     -- Adicionando entidades básicas, método Seed para início da aplicação
-    let admin1 = Usuario
-            { usuarioNome       = Just "Admin"
-            , usuarioEmail      = "admin@hpc.com"
-            , usuarioSenha      = Nothing
-            , usuarioChave      = Nothing
-            , usuarioVerificado = True
+    let admin1 = User
+            { userName     = Just "Admin"
+            , userEmail    = "admin@hpc.com"
+            , userPassword = Nothing
+            , userKey      = Nothing
+            , userVerified = True
             }
     admin1 <- setPassword "123123" admin1
     _ <- runLoggingT (runSqlPool (insertUnique admin1) pool) logFunc
 
-    let admin2 = Usuario
-            { usuarioNome       = Just "Vinícius Reis"
-            , usuarioEmail      = "vinicius.reis@aluno.ufabc.edu.br"
-            , usuarioSenha      = Nothing
-            , usuarioChave      = Nothing
-            , usuarioVerificado = True
+    let admin2 = User
+            { userName     = Just "Vinícius Reis"
+            , userEmail    = "vinicius.reis@aluno.ufabc.edu.br"
+            , userPassword = Nothing
+            , userKey      = Nothing
+            , userVerified = True
             }
     admin2 <- setPassword "11041416" admin2
     _ <- runLoggingT (runSqlPool (insertUnique admin2) pool) logFunc

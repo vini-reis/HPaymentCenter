@@ -4,25 +4,24 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE TypeFamilies #-}
 
-module Handler.Cadastrar where
+module Handler.Register where
 
-import Handler.Common
 import Import
 
-data NovoUsuario = NovoUsuario
-    { nuNome        :: Text
-    , nuEmail       :: Text
-    , nuSenha    :: Text
+data NewUser = NewUser
+    { newUserName        :: Text
+    , newUserEmail       :: Text
+    , newUserPassword    :: Text
     } deriving Show
 
 -- | Formulário usado para fazer login
-formNovoUsuario :: Form NovoUsuario
-formNovoUsuario = renderBootstrap4 BootstrapBasicForm $ NovoUsuario 
-    <$> areq textField configCampoNome Nothing
-    <*> areq emailField configCampoEmail Nothing
-    <*> areq textField configCampoSenha Nothing
+formNewUser :: Form NewUser
+formNewUser = renderBootstrap4 BootstrapBasicForm $ NewUser 
+    <$> areq textField configTextName Nothing
+    <*> areq emailField configTextEmail Nothing
+    <*> areq textField configTextPassword Nothing
     where
-        configCampoNome = 
+        configTextName = 
             FieldSettings 
                 { fsLabel = "Name"
                 , fsTooltip = Nothing
@@ -30,7 +29,7 @@ formNovoUsuario = renderBootstrap4 BootstrapBasicForm $ NovoUsuario
                 , fsName = Just "name"
                 , fsAttrs = [("class", "form-control"), ("placeholder", "Name")]
                 }
-        configCampoEmail = 
+        configTextEmail = 
             FieldSettings 
                 { fsLabel = "E-mail"
                 , fsTooltip = Nothing
@@ -38,7 +37,7 @@ formNovoUsuario = renderBootstrap4 BootstrapBasicForm $ NovoUsuario
                 , fsName = Just "email"
                 , fsAttrs = [("class", "form-control"), ("placeholder", "E-mail")]
                 }
-        configCampoSenha = 
+        configTextPassword = 
             FieldSettings 
                 { fsLabel = "Password"
                 , fsTooltip = Nothing
@@ -48,31 +47,31 @@ formNovoUsuario = renderBootstrap4 BootstrapBasicForm $ NovoUsuario
                 }
 
 -- | Método GET que serve o widget para cadastro de novos usuários
-getCadastrarR :: Handler Html
-getCadastrarR = do
-    (nuLoginForm, nuEnctype) <- generateFormPost formNovoUsuario
+getRegisterR :: Handler Html
+getRegisterR = do
+    (nuLoginForm, nuEnctype) <- generateFormPost formNewUser
     defaultLayout $ do
         setTitle "Register"
-        $(widgetFile "usuario/cadastrar")
+        $(widgetFile "user/register")
 
 -- | Método POST que recebe a requisição para cadastrar um novo usuário
-postCadastrarR :: Handler Html
-postCadastrarR = do
-    ((result, _), _) <- runFormPost formNovoUsuario
+postRegisterR :: Handler Html
+postRegisterR = do
+    ((result, _), _) <- runFormPost formNewUser
     case result of
-        FormSuccess novoUsuario -> do
-            usuario <- setPassword (nuSenha novoUsuario) usuarioAdicionado
-            usuarioId <- fromSqlKey <$> addVerifiedUser usuario
+        FormSuccess newUser -> do
+            user <- setPassword (newUserPassword newUser) addedUser
+            userId <- fromSqlKey <$> addVerifiedUser user
             redirect HomeR
             where
-                usuarioAdicionado = Usuario
-                    { usuarioNome       = Just . nuNome $ novoUsuario
-                    , usuarioEmail      = nuEmail novoUsuario
-                    , usuarioSenha      = Nothing
-                    , usuarioChave      = Nothing
-                    , usuarioVerificado = True
+                addedUser = User
+                    { userName     = Just . newUserName $ newUser
+                    , userEmail    = newUserEmail newUser
+                    , userPassword = Nothing
+                    , userKey      = Nothing
+                    , userVerified = True
                     }
 
 -- | Handler que adiciona um usuário no banco de dados
-addVerifiedUser :: Usuario -> HandlerFor App (Key Usuario)
-addVerifiedUser usuario = runDB $ insert usuario
+addVerifiedUser :: User -> HandlerFor App (Key User)
+addVerifiedUser user = runDB $ insert user

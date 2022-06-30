@@ -1,4 +1,4 @@
-<div .container-fluid .p-5>
+<div .accountiner-fluid .p-5>
     <div .row>
         $# Informações do usuário
         <div .col-md-2 .border-end>
@@ -8,52 +8,52 @@
                     <hr>
                     <div .form-group>
                         <label .form-label>Name
-                        $maybe nome <- usuarioNome usuario
+                        $maybe nome <- userName user
                             <input type="text" .form-control value=#{nome} readonly>
                     <br>
                     <div .form-group>
                         <label .form-label>E-mail
-                        <input type="text" .form-control value=#{usuarioEmail usuario} readonly>
-        $# Informações das contas
+                        <input type="text" .form-control value=#{userEmail user} readonly>
+        $# Informações das accounts
         <div .col-md-4 .border-end>
             <div .row>
                 <div .col-md-12>
                     <div .float-end>
-                        <button .btn .btn-link type="button" onclick="OpenCreateAccountModal(#{usuarioId})">
+                        <button .btn .btn-link type="button" onclick="OpenCreateAccountModal(#{userId})">
                             <i .fas .fa-plus>
                     <h5>Accounts Info
                     <hr .mb-0>
                 <div .row>
-                $if length ettyContas == 0
+                $if length ettyAccounts == 0
                     <div .col-md-12 .text-center>
                         <br><span .text-muted>No accounts found
                 $else
-                    $forall ettyConta <- ettyContas
-                        $with conta <- entityVal ettyConta, contaId <- unContaKey $ entityKey ettyConta, contaJson <- TE.decodeUtf8 $ toStrict $ encode $ toJSON conta
+                    $forall ettyAccount <- ettyAccounts
+                        $with account <- entityVal ettyAccount, accountId <- unAccountKey $ entityKey ettyAccount, accountJson <- TE.decodeUtf8 $ toStrict $ encode $ toJSON account
                             <div .col-md-12>
                                 <br>
                                 <div .float-end>
-                                    <button .btn .btn-link type="button" onclick="EditarConta('#{contaId}', '#{contaJson}')">
-                                        <i .fas .fa-pencil-alt data-hs-id=#{contaId}>
-                                <h6>#{contaNome $ conta}
+                                    <button .btn .btn-link type="button" onclick="EditarConta('#{accountId}', '#{accountJson}')">
+                                        <i .fas .fa-pencil-alt data-hs-id=#{accountId}>
+                                <h6>#{accountName $ account}
                                 <hr>
                             <div .col-sm-4>
                                 <label .form-label>Type
-                                <select .form-select .form-select-sm id="selectTipoConta" data-hs-id=#{contaId} value=#{contaSaldo $ conta} disabled>
-                                    $forall tipo <- tiposConta
-                                        $with selectedTipo <- show tipo == (T.unpack $ contaTipo conta)
+                                <select .form-select .form-select-sm id="selectTipoConta" data-hs-id=#{accountId} value=#{accountBalance $ account} disabled>
+                                    $forall tipo <- accountTypes
+                                        $with selectedTipo <- show tipo == (T.unpack $ accountType account)
                                             <option value=#{show tipo} :selectedTipo:selected>#{show tipo}
                             <div .col-sm-4>
                                 <label .form-label>Status
-                                <select .form-select .form-select-sm id="selectStatusConta" data-hs-id=#{contaId} value=#{contaSaldo $ conta} disabled>
-                                    $forall status <- statusConta
-                                        $with selectedStatus <- show status == (T.unpack $ contaStatus conta)
+                                <select .form-select .form-select-sm id="selectStatusConta" data-hs-id=#{accountId} value=#{accountBalance $ account} disabled>
+                                    $forall status <- accountStatuses
+                                        $with selectedStatus <- show status == (T.unpack $ accountStatus account)
                                             <option value=#{show status} :selectedStatus:selected>#{show status}
                             <div .col-sm-4>
                                 <label .form-label>Balance
                                 <div .input-group>
                                     <span .input-group-text style="font-size: 12px">$
-                                    <input type="text" .form-control .form-control-sm id="saldoConta" data-hs-id=#{contaId} value=#{contaSaldo $ conta} disabled>
+                                    <input type="text" .form-control .form-control-sm id="saldoConta" data-hs-id=#{accountId} value=#{accountBalance $ account} disabled>
         $# Transacoes
         <div .col-md-6>
             <div .row>
@@ -71,17 +71,17 @@
                                 <th>To
                                 <th>Value
                         <tbody>
-                        $if length ettyTransacoes == 0
+                        $if length ettyTransactions == 0
                             <tr> 
                                 <td colspan=4 .text-center .text-muted>No transactions found
                         $else
-                            $forall ettyTransacao <- ettyTransacoes
-                                $with transacao <- entityVal ettyTransacao, transacaoId <- unTransacaoKey $ entityKey ettyTransacao
+                            $forall ettyTransaction <- ettyTransactions
+                                $with transaction <- entityVal ettyTransaction, transactionId <- unTransactionKey $ entityKey ettyTransaction
                                     <tr>
-                                        <td>#{transacaoEnviadoEm transacao}
-                                        ^{showContaNome $ transacaoEnviadoDe transacao}
-                                        ^{showContaNome $ transacaoRecebidoPor transacao}
-                                        <td>#{transacaoValor transacao}
+                                        <td>#{transactionSentIn transaction}
+                                        ^{showAccountName $ transactionSentFrom transaction}
+                                        ^{showAccountName $ transactionReceivedBy transaction}
+                                        <td>#{transactionValue transaction}
 
 
 <div .modal .fade id="modalCreateAccount" tabindex="-1" aria-labelledby="labelModalCreateAccount" aria-hidden="true">
@@ -91,11 +91,11 @@
                 <div .modal-title id="labelModalCreateAccount">Create account
                 <button type="button" .btn-close data-bs-dismiss="modal" aria-label="Close">
             <div class="modal-body">
-                <form id="formNovaConta" method="post" action="@{SalvarContaR}" enctype="#{ncEnctype}">
-                    ^{novaContaForm}
+                <form id="formNewAccount" method="post" action="@{SaveAccountR}" enctype="#{ncEnctype}">
+                    ^{formNewAccount}
             <div class="modal-footer">
                 <button type="button" .btn .btn-secondary data-bs-dismiss="modal">Close
-                <button type="submit" .btn .btn-primary onclick="$('#formNovaConta').submit()">Save
+                <button type="submit" .btn .btn-primary onclick="$('#formNewAccount').submit()">Save
 
 <div .modal .fade id="modalFazerTransacao" tabindex="-1" aria-labelledby="labelModalFazerTransacao" aria-hidden="true">
     <div .modal-dialog .modal-sm>
@@ -104,8 +104,8 @@
                 <div .modal-title id="labelModalFazerTransacao">Make transaction
                 <button type="button" .btn-close data-bs-dismiss="modal" aria-label="Close">
             <div class="modal-body">
-                <form id="formNovaTransacao" method="post" action="@{TransacaoR}">
-                    <input type=hidden #enviadoPor name=enviadoPor value=#{usuarioId}>
+                <form id="formNewTransaction" method="post" action="@{TransactionR}">
+                    <input type=hidden #enviadoPor name=enviadoPor value=#{userId}>
                     <div .form-group>
                         <label .form-label>Search
                         <div .input-group>
@@ -116,8 +116,8 @@
                     <div .form-group>
                         <label .form-label>From account
                         <select #enviadoDe .form-select name=enviadoDe>
-                            $forall ettyConta <- ettyContas
-                                    <option value=#{unContaKey $ entityKey $ ettyConta}>#{contaNome $ entityVal $ ettyConta}
+                            $forall ettyAccount <- ettyAccounts
+                                    <option value=#{unAccountKey $ entityKey $ ettyAccount}>#{accountName $ entityVal $ ettyAccount}
                     <div .form-group>
                         <label .form-label>Tranfer to
                         <input #enviarPara type=text .form-control name=recebidoPor>
@@ -129,4 +129,4 @@
                         <input #valor type=double .form-control .double name=valor>
             <div class="modal-footer">
                 <button type="button" .btn .btn-secondary data-bs-dismiss="modal">Close
-                <button type="submit" .btn .btn-primary onclick="$('#formNovaTransacao').submit()">Save
+                <button type="submit" .btn .btn-primary onclick="$('#formNewTransaction').submit()">Save

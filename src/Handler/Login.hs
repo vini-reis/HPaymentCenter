@@ -15,5 +15,5 @@ data LoginForm = LoginForm
 getLoginFormR :: Handler Html
 getLoginFormR = do
     defaultLayout $ do
-        setTitle "Login!"
+        setTitle "Login"
         $(widgetFile "user/login")

@@ -1,8 +1,8 @@
 {-# LANGUAGE NoImplicitPrelude #-}
-{-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE DatatypeContexts #-}
 
 -- | Common handler functions.
 module Handler.Common where
@@ -10,15 +10,15 @@ module Handler.Common where
 import Import
 
 -- | ADT que serve como objeto JSON de retorno das requisições
-data (ToJSON a) => Retorno a = Retorno
-    { sucesso :: Bool
-    , mensagem :: Text
-    , objeto :: a
+data (ToJSON a) => Return a = Return
+    { success    :: Bool
+    , message    :: Text
+    , returnData           :: a
     } deriving (Show, Read)
 
--- | Instância de ToJSON para Retorno de um tipo a que possa ser convertido para JSON
-instance (ToJSON a) => ToJSON (Retorno a) where
-    toJSON (Retorno s m o) = object ["sucesso" .= s, "mensagem" .= m, "objeto" .= toJSON o]
+-- | Instância de ToJSON para Return de um tipo a que possa ser convertido para JSON
+instance (ToJSON a) => ToJSON (Return a) where
+    toJSON (Return s m o) = object ["success" .= s, "message" .= m, "returnData" .= toJSON o]
 
 -- | Instância de JSON para entidades do banco de dados
 -- | utilizada para coletar os ids das entidades no front-end
@@ -26,8 +26,8 @@ instance (PersistEntity a, ToJSON a) => ToJSON (Entity a) where
     toJSON = keyValueEntityToJSON
 
 -- | Instâncias de ToJSON para as entidades criadas
-instance ToJSON Conta where
+instance ToJSON Account where
     toEncoding = genericToEncoding defaultOptions
 
-instance ToJSON Transacao where
+instance ToJSON Transaction where
     toEncoding = genericToEncoding defaultOptions

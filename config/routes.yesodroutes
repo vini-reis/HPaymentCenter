@@ -3,11 +3,11 @@
 
 /static                     StaticR     Static      appStatic
 /auth                       AuthR       Auth        getAuth
-/cadastrar                  CadastrarR          GET POST
+/cadastrar                  RegisterR          GET POST
 
 /                           HomeR               GET
 /perfil/#Int64              PerfilR             GET
-/conta/salvar               SalvarContaR        POST
-/conta/salvar/#Text         AtualizarContaR     POST
-/conta/pesquisar/#Text      PesquisarContaR     GET
-/transacao                  TransacaoR          POST
+/conta/salvar               SaveAccountR        POST
+/conta/salvar/#Text         UpdateAccountR     POST
+/conta/pesquisar/#Text      SearchAccountR     GET
+/transacao                  TransactionR          POST

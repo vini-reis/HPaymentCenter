@@ -11,7 +11,7 @@ function OpenCreateAccountModal(userId){
 /*
     Captura de evento de submit do form de novas contas
 */
-$('#formNovaConta').on('submit', function (event){
+$('#formNewAccount').on('submit', function (event){
     event.preventDefault();
     event.stopPropagation();
 

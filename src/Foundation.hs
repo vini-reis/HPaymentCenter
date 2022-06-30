@@ -102,7 +102,7 @@ instance Yesod App where
 
         -- Define the menu items of the header.
         let 
-            usuarioId = fromJust muser
+            userId = fromJust muser
             menuItems =
                 [ NavbarLeft $ MenuItem
                     { menuItemLabel = "Home"
@@ -111,12 +111,12 @@ instance Yesod App where
                     }
                 , NavbarLeft $ MenuItem
                     { menuItemLabel = "Profile"
-                    , menuItemRoute = PerfilR $ fromSqlKey usuarioId
+                    , menuItemRoute = PerfilR $ fromSqlKey userId
                     , menuItemAccessCallback = isJust muser
                     }
                 , NavbarRight $ MenuItem
                     { menuItemLabel = "Register"
-                    , menuItemRoute = CadastrarR
+                    , menuItemRoute = RegisterR
                     , menuItemAccessCallback = isNothing muser
                     }
                 , NavbarRight $ MenuItem
@@ -215,7 +215,7 @@ instance YesodPersistRunner App where
     getDBRunner = defaultGetDBRunner appConnPool
 
 instance YesodAuth App where
-    type AuthId App = UsuarioId
+    type AuthId App = UserId
 
     -- Where to send a user after successful login
     loginDest :: App -> Route App
@@ -228,10 +228,10 @@ instance YesodAuth App where
     redirectToReferer _ = True
 
     authenticate creds = do
-        mUsuario <- liftHandler . runDB $ selectFirst [UsuarioEmail ==. credsIdent creds] []
-        case mUsuario of
+        mUser <- liftHandler . runDB $ selectFirst [UserEmail ==. credsIdent creds] []
+        case mUser of
             Nothing -> return $ UserError InvalidLogin
-            Just usuario -> return $ Authenticated $ entityKey usuario
+            Just user -> return $ Authenticated $ entityKey user
 
     -- You can add other plugins like Google Email, email or OAuth here
     authPlugins :: App -> [AuthPlugin App]
@@ -267,7 +267,7 @@ getLoginForm :: Route App -> Widget
 getLoginForm action = do
     req <- getRequest
     let mToken = reqToken req
-    $(whamletFile "templates/usuario/login.hamlet")
+    $(whamletFile "templates/user/login.hamlet")
 
 -- Note: Some functionality previously present in the scaffolding has been
 -- moved to documentation in the Wiki. Following are some hopefully helpful
